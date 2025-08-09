@@ -199,8 +199,8 @@ https://docs.google.com/forms/d/e/FORM_ID/formResponse and the input name must b
        submitGoogle(digits, name);
         status.classList.add("status-auto");
         status.textContent = `Welcome ${name}, you are checked in!`;
-        clearDisplay();
         setTimeout(() => {
+         clearDisplay();
           status.textContent = '';
           status.classList.remove("status-auto");
         }, 5000);
