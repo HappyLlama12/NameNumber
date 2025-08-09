@@ -52,14 +52,19 @@ https://docs.google.com/forms/d/e/FORM_ID/formResponse and the input name must b
     <h1>Club Check‑In</h1>
     <p class="subtitle">Tap then enter your 4‑digit code (first time only)</p>
 
+   <label for="nameInput" style="display:block; margin-bottom: 6px; font-weight:600;">
+  Your Name
+   </label>
+   <input
+  type="text"
+  id="nameInput"
+  placeholder="Enter your name"
+  style="width: 100%; padding: 8px; font-size: 16px; margin-bottom: 16px; border-radius: 6px; border: 1px solid #ccc;"
+/>
+     
     <div class="display" id="display">----</div>
 
     <div class="keypad" id="keypad"></div>
-
-    <div id="nameSection" style="display:none; margin-top: 12px;">
-    <label for="nameInput">Please enter your name:</label><br />
-    <input type="text" id="nameInput" placeholder="Your name" autocomplete="off" />
-   </div>
     
     <button id="submitBtn" class="action">Check In</button>
 
@@ -93,7 +98,6 @@ https://docs.google.com/forms/d/e/FORM_ID/formResponse and the input name must b
     const clearBtn = document.getElementById('clearBtn');
     const forgetBtn = document.getElementById('forgetBtn');
     const status = document.getElementById('status');
-    const nameSection = document.getElementById('nameSection');
     const nameInput = document.getElementById('nameInput');
 
     // build keypad
@@ -136,10 +140,8 @@ https://docs.google.com/forms/d/e/FORM_ID/formResponse and the input name must b
       return (cur === '----' ? '' : cur);
     }
 
-    function submitCheckIn(uid, name){
-      localStorage.setItem('clubUID', uid);
-      localStorage.setItem('clubName', name);
-      
+    function submitGoogle(uid, name){
+       
       // build a form and submit it to the Google Form response endpoint inside the hidden iframe
       const form = document.createElement('form');
       form.method = 'POST';
@@ -152,12 +154,14 @@ https://docs.google.com/forms/d/e/FORM_ID/formResponse and the input name must b
       input.value = uid;
       form.appendChild(input);
 
-      const nameInputField = document.createElement('input');
-      nameInputField.type = 'hidden';
-      nameInputField.name = ENTRY_FOR_NAME; // Name field
-      nameInputField.value = name;
-      form.appendChild(nameInputField);
-      
+      if (name && name.trim() !== "") {
+         const nameInputField = document.createElement('input');
+         nameInputField.type = 'hidden';
+         nameInputField.name = ENTRY_FOR_NAME; // Name field
+         nameInputField.value = name.trim();
+         form.appendChild(nameInputField);
+      }
+
       // append & submit
       document.body.appendChild(form);
       form.submit();
@@ -173,19 +177,18 @@ https://docs.google.com/forms/d/e/FORM_ID/formResponse and the input name must b
         status.textContent = 'Please enter a 4‑digit code.';
         return;
       }
+      const name = nameInput.value.trim();
+       if (name === "") {
+      status.textContent = 'Name cannot be empty.';
+      return;
+      }
+      
 
-      const storedName = localStorage.getItem('clubName');
-
-      if (!storedName) {
-        // Show the name input if no name stored
-        nameSection.style.display = 'block';
-        nameInput.focus();
-        status.textcontent = 'Please enter your name';
-      } else {
-        // Have the name, submit immediately and show welcome back message
-        submitCheckIn(digits, storedName);
+       localStorage.setItem("clubUID", digits);
+       localStorage.setItem("clubName", name);
+       submitGoogle(digits, name);
         status.classList.add("status-auto");
-        status.textContent = `Welcome back ${storedName}, you are checked in!`;
+        status.textContent = `Welcome ${name}, you are checked in!`;
         clearDisplay();
         setTimeout(() => {
           status.textContent = '';
@@ -194,27 +197,6 @@ https://docs.google.com/forms/d/e/FORM_ID/formResponse and the input name must b
       }
     });
 
-    //Event Listener for the name input to submit on enter key
-    nameInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter') {
-    const name = nameInput.value.trim();
-    if (name.length === 0) {
-      status.textContent = 'Name cannot be empty.';
-      return;
-    }
-    const uid = getDigits();
-    submitCheckIn(uid, name);
-    nameSection.style.display = 'none';
-    status.classList.add("status-auto");
-    status.textContent = `Welcome ${name}, you are checked in!`;
-    clearDisplay();
-    setTimeout(() => {
-      status.textContent = '';
-      status.classList.remove("status-auto");
-    }, 5000);
-  }
-});
-
     // on load: if saved, auto-submit
     window.addEventListener("load", () => {
   const savedUID = localStorage.getItem("clubUID");
@@ -222,7 +204,7 @@ https://docs.google.com/forms/d/e/FORM_ID/formResponse and the input name must b
   if (savedUID && savedUID.length === MAX_DIGITS && savedName) {
     status.classList.add("status-auto");
     status.textContent = `Welcome back ${savedName}, you are checked in!`;
-    submitCheckIn(savedUID, savedName);
+    submitGoogle(savedUID, savedName);
     setTimeout(() => {
       clearDisplay();
       status.textContent = "";
