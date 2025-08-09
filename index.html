@@ -114,12 +114,12 @@ https://docs.google.com/forms/d/e/FORM_ID/formResponse and the input name must b
     for(let i=1;i<=9;i++) keypad.appendChild(makeKey(i));
     keypad.appendChild(makeKey('0'));
 
-    function addDigit(d){
-      const cur = display.textContent.replace(/\D/g,'');
-      if(cur.length >= MAX_DIGITS) return;
-      const next = (cur === '----' ? d : cur + d);
-      display.textContent = next.padEnd(4,'•');
-    }
+    function addDigit(d) {
+  let cur = display.textContent.replace(/[^0-9]/g, ''); // keep only digits
+  if (cur.length >= MAX_DIGITS) return;
+  cur += d;
+  display.textContent = cur.padEnd(MAX_DIGITS, '-'); // use dash placeholders
+}
 
     function clearDisplay() {
      display.textContent = "----";
